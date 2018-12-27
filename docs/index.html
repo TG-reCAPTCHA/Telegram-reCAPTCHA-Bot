@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-US" style="opacity: 1; visibility: visible;">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Verification Required! | 人机身份验证</title>
+    <meta name="captcha-bypass" id="captcha-bypass">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <link rel="stylesheet" id="cf_styles-css" href="/styles/css/cf.errors.css" type="text/css" media="screen,projection">
+    <style type="text/css"> body { margin: 0; padding: 0 } </style>
+    <script src='https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js'></script>
+    <link rel="stylesheet" id="cf_styles-css" href="/styles/css/prism.css" type="text/css">
+</head>
+
+<body>
+    <div id="cf-wrapper">
+        <div id="cf-error-details" class="cf-error-details-wrapper">
+            <div class="cf-wrapper cf-header cf-error-overview">
+                <h1>One more step</h1>
+                <h2 class="cf-subheadline"><span>Please complete the security check to access</span>
+                    <span class="gname"></span>
+                </h2>
+            </div><!-- /.header -->
+
+            <div class="cf-section cf-highlight cf-captcha-container">
+                <div class="cf-wrapper">
+                    <div class="cf-columns two">
+                        <div class="cf-column">
+                            <div class="cf-highlight-inverse cf-form-stacked">
+                                <div id="g-recaptcha"></div>
+                            </div>
+                            <div id="guideForManual" style="margin-top: 2em; display: none;">
+                                If you aren't be redirected automatically, please copy the following command and send to @<a class="botname"></a>
+                                <pre style="margin-top: 1em; padding: 1em;" class="language-*"><code id="recaptcha-response" class="language-* selectable"></code></pre>
+                            </div>
+                        </div>
+
+                        <div class="cf-column">
+                            <div class="cf-screenshot-container">
+                                <span class="cf-no-screenshot"></span>
+                            </div>
+                        </div>
+                    </div><!-- /.columns -->
+                </div>
+            </div><!-- /.captcha-container -->
+
+            <div class="cf-section cf-wrapper">
+                <div class="cf-columns two">
+                    <div class="cf-column">
+                        <h2>Why do I have to complete a CAPTCHA?</h2>
+                        <p>Completing the CAPTCHA proves you are a human and gives you access to the Telegram group.</p>
+                    </div>
+
+                    <div class="cf-column">
+                        <h2>How this verification page protect my safety?</h2>
+                        <p>This page is hosted on Github, captcha is provided by Google, and Pastebin from LuckPerms. No one can associate your IP address to your Telegram account based on our safety design.</p>
+                    </div>
+                </div>
+            </div><!-- /.section -->
+
+
+            <div class="cf-error-footer cf-wrapper">
+                <p>
+                    <span class="cf-footer-item">User ID: <strong><span class="uid"></span></strong></span>
+                    <span class="cf-footer-separator">•</span>
+                    <span class="cf-footer-item"><span>Group ID</span>: <span class="gid"></span></span>
+                    <span class="cf-footer-separator">•</span>
+                    <span class="cf-footer-item"><span>Security by</span> <a href="https://github.com/" id="brand_link" target="_blank">Telegram reCAPTCHA</a></span>
+
+                </p>
+            </div><!-- /.error-footer -->
+
+            <script src='/styles/js/main.js'></script>
+            <script src='https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit'></script>
+            <script src='/styles/js/prism.js' async></script>
+        </div><!-- /#cf-error-details -->
+    </div><!-- /#cf-wrapper -->
+    </div>
+    </div>
+</body>
+
+</html>
