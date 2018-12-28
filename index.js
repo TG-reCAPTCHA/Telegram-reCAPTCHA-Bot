@@ -33,7 +33,7 @@ bot.command('start', async (ctx) => {
         ctx.reply("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
         return 1;
     }
-    
+
     request('https://bytebin.lucko.me/' + pasteID, (error, response, body) => {
         if (error || (response && (response.statusCode !== 200))) {
             ctx.replyWithMarkdown("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\nTechnical details: `" + error + "`\nStatus code: " + (response && response.statusCode));
@@ -60,6 +60,7 @@ bot.command('verify', (ctx) => {
     }
 
     if (!ctx.state.command.args) {
+        ctx.telegram.webhookReply = true;
         ctx.reply("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
         return 1;
     }
@@ -87,12 +88,15 @@ bot.on('new_chat_members', async (ctx) => {
         ctx.telegram.restrictChatMember(ctx.message.chat.id, user.id);
     });
 
+    // Pre-reply user joins message, record message id to JWT for subsequent deletion operation.
     ctx.message.new_chat_members.filter(({
         is_bot
     }) => !is_bot).forEach(async user => {
         const {
             message_id
-        } = await ctx.reply("Processing...");
+        } = await ctx.reply("Processing...", {
+            "reply_to_message_id": ctx.message.message_id
+        });
 
         const jwtoken = jwt.sign({
             exp: Math.floor(Date.now() / 1000) + (60 * 10),
