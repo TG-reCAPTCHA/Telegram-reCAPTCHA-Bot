@@ -1,0 +1,17 @@
+{
+  "name": "Telegram-reCAPTCHA-Bot",
+  "version": "1.0.0",
+  "description": "A simple bot used for protecting Telegram groups from SPAM, powered by reCAPTCHA while protecting privacy.",
+  "main": "index.js",
+  "repository": "https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot.git",
+  "author": "lwl12 <i@lwl12.com>",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^6.2.0",
+    "jsonwebtoken": "^8.4.0",
+    "request": "^2.88.0",
+    "telegraf": "^3.25.5",
+    "telegraf-aws": "^0.1.1",
+    "telegraf-command-parts": "^1.0.3"
+  }
+}
