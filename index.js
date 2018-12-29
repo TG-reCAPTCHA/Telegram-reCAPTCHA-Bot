@@ -44,7 +44,7 @@ bot.command('start', async (ctx) => {
 
         const payload = JSON.parse(response.body);
         if (!payload || !payload.jwt || !payload.gresponse) {
-            throw new Error("Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.");
+            throw new Error();
         }
 
         return await verifyUser(payload, ctx);
@@ -168,10 +168,6 @@ async function verifyUser(payload, ctx) {
         ctx.replyWithMarkdown(msg);
         return 1;
     }
-}
-
-const BotError = function (ctx, message) {
-    ctx.replyWithMarkdown(message);
 }
 
 exports.handler = (event, ctx, callback) => {
