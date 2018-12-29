@@ -166,7 +166,6 @@ function verifyUser(payload, ctx) {
         var msg = "Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\n" +
                   "Technical details: ```" + err + "```";
         if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
-        ctx.telegram.webhookReply = true;
         ctx.replyWithMarkdown(msg);
         return 1;
     }
