@@ -1,7 +1,8 @@
 require('dotenv').config();
-const request = require('request-promise');
+const CryptoJS = require("crypto-js");
 const jwt = require('jsonwebtoken');
 const Telegraf = require('telegraf');
+const request = require('request-promise');
 const telegrafAws = require('telegraf-aws');
 const commandParts = require('telegraf-command-parts');
 
@@ -43,8 +44,11 @@ bot.command('start', async (ctx) => {
             throw new Error("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\n" +
                             "Status code: " + (response && response.statusCode));
         }
-
-        const payload = JSON.parse(response.body);
+        
+        const payload = JSON.parse(
+            CryptoJS.AES.decrypt(response.body, ctx.message.from.id).toString(CryptoJS.enc.Utf8)
+        );
+        
         if (!payload || !payload.jwt || !payload.gresponse) {
             throw new Error();
         }
