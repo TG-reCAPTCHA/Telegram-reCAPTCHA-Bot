@@ -20,6 +20,10 @@ bot.telegram.getMe().then((botInfo) => {
 const updateHandler = telegrafAws(bot, {
     timeout: 3000
 });
+const options = {
+    resolveWithFullResponse: true,
+    simple: false
+}
 
 bot.telegram.setWebhook(process.env.BOT_WEBHOOK_URL);
 
@@ -35,10 +39,9 @@ bot.command('start', async (ctx) => {
             throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
         }
         
-        response = await request({url: 'https://bytebin.lucko.me/' + pasteID, resolveWithFullResponse: true});
+        response = await request('https://bytebin.lucko.me/' + pasteID, options);
         if (response && (response.statusCode !== 200)) {
             throw new Error("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\n" +
-                            "Technical details: `" + error + "`\n" + 
                             "Status code: " + (response && response.statusCode))
         }
 
@@ -133,17 +136,12 @@ async function verifyUser(payload, ctx) {
             throw new Error("You can't verify account for other person. (`" + requestInfo.data.uid + "`, `" + ctx.message.from.id + "`)");
         }
 
-        response = await request.post({
-            url: 'https://www.google.com/recaptcha/api/siteverify',
-            form: {
-                secret: process.env.G_SECRETKEY,
-                response: payload.gresponse
-            },
-            resolveWithFullResponse: true
+        response = await request.post('https://www.google.com/recaptcha/api/siteverify', options).form({
+            secret: process.env.G_SECRETKEY,
+            response: payload.gresponse
         });
         if (response && (response.statusCode !== 200)) {
             throw new Error("Error when trying to connect Google verification servers, you may try to use the backup method shown in verify page or just rest for a while and try again.\n" +
-                            "Technical details: `" + error + "`\n" +
                             "Status code: " + (response && response.statusCode));
         }
 
