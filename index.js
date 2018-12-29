@@ -27,31 +27,34 @@ bot.command('start', async (ctx) => {
     if (ctx.message.chat.type !== "private") {
         return 0;
     }
-    const pasteID = ctx.state.command.args;
-    if (!pasteID) {
-        ctx.telegram.webhookReply = true;
-        ctx.reply("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
-        return 1;
-    }
 
-    request('https://bytebin.lucko.me/' + pasteID, (error, response, body) => {
-        if (error || (response && (response.statusCode !== 200))) {
-            ctx.replyWithMarkdown("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\nTechnical details: `" + error + "`\nStatus code: " + (response && response.statusCode));
-            return 1;
+    try {
+        const pasteID = ctx.state.command.args;
+        if (!pasteID) {
+            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
         }
 
-        try {
+        request('https://bytebin.lucko.me/' + pasteID, (error, response, body) => {
+            if (error || (response && (response.statusCode !== 200))) {
+                throw new Error("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\n" +
+                                "Technical details: `" + error + "`\n" + 
+                                "Status code: " + (response && response.statusCode))
+            }
+
             const payload = JSON.parse(body);
             if (!payload || !payload.jwt || !payload.gresponse) {
-                ctx.reply("Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.");
-                return 1;
+                throw new Error("Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.");
             }
-            return verifyUser(payload, ctx);
-        } catch (err) {
-            ctx.reply("Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.");
-        }
-    });
 
+            return verifyUser(payload, ctx);
+        });
+    } catch (err) {
+        var msg = "Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.";
+        if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
+        ctx.telegram.webhookReply = true;
+        ctx.replyWithMarkdown(msg);
+        return 1;
+    }
 });
 
 bot.command('verify', (ctx) => {
@@ -59,26 +62,24 @@ bot.command('verify', (ctx) => {
         return 0;
     }
 
-    if (!ctx.state.command.args) {
-        ctx.telegram.webhookReply = true;
-        ctx.reply("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
-        return 1;
-    }
-
     try {
+        if (!ctx.state.command.args) {
+            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
+        }
+
         const payload = JSON.parse(new Buffer(ctx.state.command.args, 'base64').toString());
         if (!payload || !payload.jwt || !payload.gresponse) {
-            ctx.telegram.webhookReply = true;
-            ctx.reply("Invalid data, please try again later.");
-            return 1;
+            throw new Error()
         }
+
         return verifyUser(payload, ctx);
     } catch (err) {
+        var msg = "Invalid data, please try again later.";
+        if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
         ctx.telegram.webhookReply = true;
-        ctx.reply("Invalid data, please try again later.");
+        ctx.replyWithMarkdown(msg);
         return 1;
     }
-
 });
 
 bot.on('new_chat_members', async (ctx) => {
@@ -128,10 +129,8 @@ bot.on('new_chat_members', async (ctx) => {
 function verifyUser(payload, ctx) {
     try {
         const requestInfo = jwt.verify(payload.jwt, process.env.JWT_SECRET);
-
         if (requestInfo.data.uid !== ctx.message.from.id.toString()) {
-            ctx.replyWithMarkdown("You can't verify account for other person. (`" + requestInfo.data.uid + "`, `" + ctx.message.from.id + "`)");
-            return 1;
+            throw new Error("You can't verify account for other person. (`" + requestInfo.data.uid + "`, `" + ctx.message.from.id + "`)");
         }
 
         request.post({
@@ -142,29 +141,32 @@ function verifyUser(payload, ctx) {
             }
         }, (error, response, body) => {
             if (error || (response && (response.statusCode !== 200))) {
-                ctx.replyWithMarkdown("Error when trying to connect Google verification servers, you may try to use the backup method shown in verify page or just rest for a while and try again.\nTechnical details: `" + error + "`\nStatus code: " + (response && response.statusCode));
-                return 1;
+                throw new Error("Error when trying to connect Google verification servers, you may try to use the backup method shown in verify page or just rest for a while and try again.\n" +
+                                "Technical details: `" + error + "`\n" +
+                                "Status code: " + (response && response.statusCode));
             }
+
             const result = JSON.parse(body);
-            if (result.success) {
-                ctx.telegram.restrictChatMember(requestInfo.data.gid, requestInfo.data.uid, {
-                    "can_send_messages": true,
-                    "can_send_media_messages": true,
-                    "can_send_other_messages": true,
-                    "can_add_web_page_previews": true
-                });
-
-                ctx.telegram.deleteMessage(requestInfo.data.gid, requestInfo.data.mid);
-
-                ctx.replyWithMarkdown("Congratulations~ We already verified you, now you can enjoy your chatting with `" + decodeURIComponent(requestInfo.data.gname) + "`'s members!");
-                return 0;
-            } else {
-                ctx.replyWithMarkdown("Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.");
-                return 1;
+            if (!result.success) {
+                throw new Error("Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.");
             }
+
+            ctx.telegram.restrictChatMember(requestInfo.data.gid, requestInfo.data.uid, {
+                "can_send_messages": true,
+                "can_send_media_messages": true,
+                "can_send_other_messages": true,
+                "can_add_web_page_previews": true
+            });
+            ctx.telegram.deleteMessage(requestInfo.data.gid, requestInfo.data.mid);
+            ctx.replyWithMarkdown("Congratulations~ We already verified you, now you can enjoy your chatting with `" + decodeURIComponent(requestInfo.data.gname) + "`'s members!");
+            return 0;
         });
     } catch (err) {
-        ctx.replyWithMarkdown("Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\nTechnical details: ```" + err + "```");
+        var msg = "Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\n" +
+                  "Technical details: ```" + err + "```";
+        if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
+        ctx.telegram.webhookReply = true;
+        ctx.replyWithMarkdown(msg);
         return 1;
     }
 }
