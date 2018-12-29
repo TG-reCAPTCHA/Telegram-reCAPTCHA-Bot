@@ -31,6 +31,7 @@ bot.command('start', async (ctx) => {
     try {
         const pasteID = ctx.state.command.args;
         if (!pasteID) {
+            ctx.telegram.webhookReply = true;
             throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
         }
 
@@ -51,7 +52,6 @@ bot.command('start', async (ctx) => {
     } catch (err) {
         var msg = "Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.";
         if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
-        ctx.telegram.webhookReply = true;
         ctx.replyWithMarkdown(msg);
         return 1;
     }
@@ -64,11 +64,13 @@ bot.command('verify', (ctx) => {
 
     try {
         if (!ctx.state.command.args) {
+            ctx.telegram.webhookReply = true;
             throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
         }
 
         const payload = JSON.parse(new Buffer(ctx.state.command.args, 'base64').toString());
         if (!payload || !payload.jwt || !payload.gresponse) {
+            ctx.telegram.webhookReply = true;
             throw new Error()
         }
 
@@ -76,7 +78,6 @@ bot.command('verify', (ctx) => {
     } catch (err) {
         var msg = "Invalid data, please try again later.";
         if (err.__proto__.toString() == 'Error' && err.message) msg = err.message;
-        ctx.telegram.webhookReply = true;
         ctx.replyWithMarkdown(msg);
         return 1;
     }
