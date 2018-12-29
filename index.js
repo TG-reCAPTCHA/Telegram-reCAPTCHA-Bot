@@ -21,7 +21,10 @@ const updateHandler = telegrafAws(bot, {
     timeout: 3000
 });
 
-bot.telegram.setWebhook(process.env.BOT_WEBHOOK_URL);
+const options = {
+    resolveWithFullResponse: true,
+    simple: false
+}
 
 bot.command('start', async (ctx) => {
     if (ctx.message.chat.type !== "private") {
@@ -32,14 +35,13 @@ bot.command('start', async (ctx) => {
         const pasteID = ctx.state.command.args;
         if (!pasteID) {
             ctx.telegram.webhookReply = true;
-            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
+            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
         }
         
-        response = await request({url: 'https://bytebin.lucko.me/' + pasteID, resolveWithFullResponse: true});
+        const response = await request({url: 'https://bytebin.lucko.me/' + pasteID, options});
         if (response && (response.statusCode !== 200)) {
             throw new Error("Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\n" +
-                            "Technical details: `" + error + "`\n" + 
-                            "Status code: " + (response && response.statusCode))
+                            "Status code: " + (response && response.statusCode));
         }
 
         const payload = JSON.parse(response.body);
@@ -64,13 +66,13 @@ bot.command('verify', async (ctx) => {
     try {
         if (!ctx.state.command.args) {
             ctx.telegram.webhookReply = true;
-            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.")
+            throw new Error("This bot is only using to verify machine-generated code, you may check out https://github.com/TG-reCAPTCHA/Telegram-reCAPTCHA-Bot for more information.");
         }
 
         const payload = JSON.parse(new Buffer(ctx.state.command.args, 'base64').toString());
         if (!payload || !payload.jwt || !payload.gresponse) {
             ctx.telegram.webhookReply = true;
-            throw new Error()
+            throw new Error();
         }
 
         return await verifyUser(payload, ctx);
@@ -133,17 +135,14 @@ async function verifyUser(payload, ctx) {
             throw new Error("You can't verify account for other person. (`" + requestInfo.data.uid + "`, `" + ctx.message.from.id + "`)");
         }
 
-        response = await request.post({
+        const response = await request.post({
             url: 'https://www.google.com/recaptcha/api/siteverify',
             form: {
                 secret: process.env.G_SECRETKEY,
                 response: payload.gresponse
-            },
-            resolveWithFullResponse: true
-        });
+            }, options });
         if (response && (response.statusCode !== 200)) {
             throw new Error("Error when trying to connect Google verification servers, you may try to use the backup method shown in verify page or just rest for a while and try again.\n" +
-                            "Technical details: `" + error + "`\n" +
                             "Status code: " + (response && response.statusCode));
         }
 
@@ -158,7 +157,11 @@ async function verifyUser(payload, ctx) {
             "can_send_other_messages": true,
             "can_add_web_page_previews": true
         });
-        ctx.telegram.deleteMessage(requestInfo.data.gid, requestInfo.data.mid);
+        //ctx.telegram.deleteMessage(requestInfo.data.gid, requestInfo.data.mid);
+        ctx.telegram.editMessageText(requestInfo.data.gid, requestInfo.data.mid, undefined, `Passed. Verification takes: \`${Math.floor(new Date() / 1000) - requestInfo.iat}s\``, {
+            parse_mode: "markdown",
+            reply_markup: JSON.stringify({"inline_keyboard": []})
+        });
         ctx.replyWithMarkdown("Congratulations~ We already verified you, now you can enjoy your chatting with `" + decodeURIComponent(requestInfo.data.gname) + "`'s members!");
         return 0;
     } catch (err) {
