@@ -1,7 +1,8 @@
 require('dotenv').config();
-const CryptoJS = require("crypto-js");
 const jwt = require('jsonwebtoken');
 const Telegraf = require('telegraf');
+const CryptoJS = require("crypto-js");
+const escapeHtml = require('escape-html');
 const request = require('request-promise');
 const telegrafAws = require('telegraf-aws');
 const commandParts = require('telegraf-command-parts');
@@ -120,9 +121,9 @@ bot.on('new_chat_members', async (ctx) => {
             }
         }, process.env.JWT_SECRET);
 
-        const msg = "Dear [" + user.first_name + "](tg://user?id=" + user.id.toString() + "), with our Anti-SPAM policy, we kindly inform you that you need to click the following button to prove your human identity.\n\nThis link will only valid in 10 minutes, please complete verification as soon as possible, thanks for your cooperation.";
+        const msg = `Dear <a href="tg://user?id=${user.id.toString()}">${escapeHtml(user.first_name)}</a>, with our Anti-SPAM policy, we kindly inform you that you need to click the following button to prove your human identity.\n\nThis link will only valid in 10 minutes, please complete verification as soon as possible, thanks for your cooperation.`;
         ctx.telegram.editMessageText(ctx.message.chat.id, message_id, undefined, msg, {
-            parse_mode: "markdown",
+            parse_mode: "HTML",
             reply_markup: JSON.stringify({
                 "inline_keyboard": [
                     [{
@@ -175,7 +176,7 @@ async function verifyUser(payload, ctx) {
                 "inline_keyboard": []
             })
         });
-        ctx.replyWithMarkdown("Congratulations~ We already verified you, now you can enjoy your chatting with `" + decodeURIComponent(requestInfo.data.gname) + "`'s members!");
+        ctx.replyWithHTML(`Congratulations~ We already verified you, now you can enjoy your chatting with <code>${escapeHtml(decodeURIComponent(requestInfo.data.gname))}</code>'s members!`);
         return 0;
     } catch (err) {
         var msg = "Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\n" +
