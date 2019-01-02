@@ -4,6 +4,7 @@ services:
   tg-recaptcha-bot:
     image: lwl12/tg-recaptcha-bot
     # build: .
+    restart: always
     environment: 
       - BOT_TOKEN=
       - JWT_SECRET=
