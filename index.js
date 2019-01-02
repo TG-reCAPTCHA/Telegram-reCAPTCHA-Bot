@@ -190,3 +190,8 @@ async function verifyUser(payload, ctx) {
 exports.handler = (event, ctx, callback) => {
     updateHandler(event, callback);
 };
+
+if (!(process.env.LAMBDA_TASK_ROOT && process.env.AWS_EXECUTION_ENV)) {
+    console.log("Start Polling...");
+    bot.startPolling();
+}
