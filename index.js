@@ -143,6 +143,7 @@ bot.on('new_chat_members', async (ctx) => {
                     ],
                 }),
             });
+            console.log(JSON.stringify({"time": new Date(), "event": "newTokenIssued", "gid": CryptoJS.MD5(requestInfo.data.gid).toString()}));
         });
 
     return 0;
@@ -173,21 +174,23 @@ async function verifyUser(payload, ctx) {
         if (!result.success) {
             throw new Error("Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.");
         }
-
-        ctx.telegram.restrictChatMember(requestInfo.data.gid, requestInfo.data.uid, {
+        
+        await ctx.telegram.restrictChatMember(requestInfo.data.gid, requestInfo.data.uid, {
             can_send_messages: true,
             can_send_media_messages: true,
             can_send_other_messages: true,
             can_add_web_page_previews: true,
         });
         // ctx.telegram.deleteMessage(requestInfo.data.gid, requestInfo.data.mid);
-        ctx.telegram.editMessageText(requestInfo.data.gid, requestInfo.data.mid, undefined, `Passed. Verification takes: \`${Math.floor(new Date() / 1000) - requestInfo.iat}s\``, {
+        const duration = (new Date() - requestInfo.iat * 1000) / 1000;
+        ctx.telegram.editMessageText(requestInfo.data.gid, requestInfo.data.mid, undefined, `Passed. Verification takes: \`${duration}s\``, {
             parse_mode: 'markdown',
             reply_markup: JSON.stringify({
                 inline_keyboard: [],
             }),
         });
         ctx.replyWithHTML(`Congratulations~ We already verified you, now you can enjoy your chatting with <code>${escapeHtml(decodeURIComponent(requestInfo.data.gname))}</code>'s members!`);
+        console.log(JSON.stringify({"time": new Date(), "event": "VerifySuccess", "gid": CryptoJS.MD5(requestInfo.data.gid).toString(), "duration": duration}));
         return 0;
     } catch (err) {
         let msg = "Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\n" + 'Technical details: ```' + err + '```';
