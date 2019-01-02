@@ -60,6 +60,8 @@ bot.command('start', async (ctx) => {
             if (err.message === 'Malformed UTF-8 data') {
                 msg =
                     "You can't verify account for another person. \nIf you sure you are now trying to verify yourself account instead of others, please try to use the backup method shown in verify page or just rest for a while and try again.";
+            } else if (err.message === '404 - "Invalid path"') {
+                msg = 'Invalid data from Pastebin, please try again later or use the backup method provided in the verification page.';
             } else {
                 msg = err.message;
             }

@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  tg-recaptcha-bot:
+    image: lwl12/tg-recaptcha-bot
+    # build: .
+    environment: 
+      - BOT_TOKEN=
+      - JWT_SECRET=
+      - G_SITEKEY=
+      - G_SECRETKEY=
