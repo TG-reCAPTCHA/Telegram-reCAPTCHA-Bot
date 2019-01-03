@@ -47,7 +47,7 @@ const updateHandler = telegrafAws(bot, {
     timeout: 3000,
 });
 
-let invitedUser = new Map();
+const invitedUser = new Map();
 
 bot.command('start', async (ctx) => {
     if (ctx.message.chat.type !== 'private') {
@@ -144,13 +144,13 @@ bot.command('verify', async (ctx) => {
 
 bot.on('callback_query', async (ctx) => {
     const member = await ctx.telegram.getChatMember(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.from.id);
-    if (!member || !(member.status === 'creator' || (member.status === 'administrator' && member["can_invite_users"]))) {
+    if (!member || !(member.status === 'creator' || (member.status === 'administrator' && member.can_invite_users))) {
         return 0;
     }
     const requestInfo = JSON.parse(ctx.callbackQuery.data);
     switch (requestInfo.action) {
-        case "invite":
-            if (!requestInfo.expire || requestInfo.expire > 30 || requestInfo.expire < 1){
+        case 'invite': {
+            if (!requestInfo.expire || requestInfo.expire > 30 || requestInfo.expire < 1) {
                 return 0;
             }
             const jwtoken = jwt.sign(
@@ -158,7 +158,7 @@ bot.on('callback_query', async (ctx) => {
                     exp: Math.floor(Date.now() / 1000) + requestInfo.expire * 86400,
                     data: {
                         invite: true,
-                        uid: "Public Invitation",
+                        uid: 'Public Invitation',
                         gid: ctx.callbackQuery.message.chat.id.toString(),
                         gname: encodeURIComponent(ctx.callbackQuery.message.chat.title),
                     },
@@ -174,7 +174,7 @@ bot.on('callback_query', async (ctx) => {
                 })
             );
 
-            const msg = "Generated. Your invite link:\n<code>" + 'https://tg-recaptcha.github.io/#' + jwtoken + ';' + bot.options.username + ';' + process.env.G_SITEKEY + "</code>";
+            const msg = 'Generated. Your invite link:\n<code>' + 'https://tg-recaptcha.github.io/#' + jwtoken + ';' + bot.options.username + ';' + process.env.G_SITEKEY + '</code>';
             ctx.telegram.editMessageText(ctx.callbackQuery.message.chat.id, ctx.callbackQuery.message.message_id, undefined, msg, {
                 parse_mode: 'HTML',
                 reply_markup: JSON.stringify({
@@ -183,39 +183,39 @@ bot.on('callback_query', async (ctx) => {
             });
 
             break;
-    
+        }
         default:
             break;
     }
-    //ctx.answerCbQuery("Generated.", true);
+    // ctx.answerCbQuery("Generated.", true);
 });
 
 bot.command('invite', async (ctx) => {
     if (ctx.message.chat.type !== 'supergroup') {
         return 0;
     }
-    
+
     try {
         if (isRateLimited(ctx)) {
             return 1;
         }
 
-        if (isLambda){
+        if (isLambda) {
             throw new Error('Invite feature is currently not support Lambda.');
         }
 
         const member = await ctx.telegram.getChatMember(ctx.message.chat.id, ctx.message.from.id);
-        if (!member || !(member.status === 'creator' || (member.status === 'administrator' && member["can_invite_users"]))) {
+        if (!member || !(member.status === 'creator' || (member.status === 'administrator' && member.can_invite_users))) {
             throw new Error('You have no permission to invite users.');
         }
 
         const botRights = await ctx.telegram.getChatMember(ctx.message.chat.id, bot.options.bid);
-        if (botRights && botRights["can_invite_users"] === false) {
+        if (botRights && botRights.can_invite_users === false) {
             throw new Error('I have no permission to invite users.');
         }
-        
-        if (!ctx.state.command.splitArgs[0] || ctx.state.command.splitArgs[0] > 30 || ctx.state.command.splitArgs[0] < 1){
-            throw new Error("Usage: /invite <Valid>\n\nValid: Generated link is valid for how many days, between 1 and 30.");
+
+        if (!ctx.state.command.splitArgs[0] || ctx.state.command.splitArgs[0] > 30 || ctx.state.command.splitArgs[0] < 1) {
+            throw new Error('Usage: /invite <Valid>\n\nValid: Generated link is valid for how many days, between 1 and 30.');
         }
 
         ctx.telegram.sendMessage(ctx.message.chat.id, `Please noticed that we <b>UNABLE TO REVOKE THE INVITE LINK</b> for you. Are you sure you want to generate an invite link valid for ${ctx.state.command.splitArgs[0]}day(s)?`, {
@@ -226,13 +226,12 @@ bot.command('invite', async (ctx) => {
                     [
                         {
                             text: `Sure, generate a link valid for ${ctx.state.command.splitArgs[0]}day(s).`,
-                            callback_data: JSON.stringify({action: "invite", expire: ctx.state.command.splitArgs[0]}),
+                            callback_data: JSON.stringify({ action: 'invite', expire: ctx.state.command.splitArgs[0] }),
                         },
                     ],
                 ],
             }),
         });
-
     } catch (err) {
         let msg = 'Error when trying to generate an invite link.';
         if (err.__proto__.toString() === 'Error' && err.message) {
@@ -250,7 +249,7 @@ bot.command('invite', async (ctx) => {
 bot.on('new_chat_members', async (ctx) => {
     ctx.message.new_chat_members
         .filter(({ is_bot }) => !is_bot)
-        .filter(({id}) => !invitedUser.has(id) || invitedUser.get(id) !== ctx.message.chat.id.toString())
+        .filter(({ id }) => !invitedUser.has(id) || invitedUser.get(id) !== ctx.message.chat.id.toString())
         .forEach((user) => {
             ctx.telegram.restrictChatMember(ctx.message.chat.id, user.id);
         });
@@ -258,8 +257,8 @@ bot.on('new_chat_members', async (ctx) => {
     // Pre-reply user joins message, record message id to JWT for subsequent deletion operation.
     ctx.message.new_chat_members
         .filter(({ is_bot }) => !is_bot)
-        .filter(({id}) => {
-            if(invitedUser.has(id) && invitedUser.get(id) === ctx.message.chat.id.toString()) {
+        .filter(({ id }) => {
+            if (invitedUser.has(id) && invitedUser.get(id) === ctx.message.chat.id.toString()) {
                 setTimeout(() => {
                     invitedUser.delete(id);
                 }, 5000);
@@ -311,7 +310,7 @@ bot.on('new_chat_members', async (ctx) => {
                 }),
             });
         });
-    
+
     return 0;
 });
 
@@ -341,7 +340,7 @@ async function verifyUser(payload, ctx) {
             throw new Error("Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.");
         }
 
-        if (requestInfo.data.invite){
+        if (requestInfo.data.invite) {
             const inviteLink = await ctx.telegram.exportChatInviteLink(requestInfo.data.gid);
             invitedUser.set(ctx.message.from.id, requestInfo.data.gid);
             ctx.telegram.sendMessage(ctx.message.chat.id, `Congratulations~ We already verified you, you can join the group <code>${escapeHtml(decodeURIComponent(requestInfo.data.gname))}</code> now!`, {

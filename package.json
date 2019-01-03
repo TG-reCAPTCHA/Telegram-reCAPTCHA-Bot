@@ -1,5 +1,5 @@
 {
-  "name": "Telegram-reCAPTCHA-Bot",
+  "name": "telegram-recaptcha-bot",
   "version": "1.0.0",
   "description": "A simple bot used for protecting Telegram groups from SPAM, powered by reCAPTCHA while protecting privacy.",
   "main": "index.js",
