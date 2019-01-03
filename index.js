@@ -26,11 +26,14 @@ if (isLambda) {
                 TableName: process.env.AWS_DYNAMODB_TABLE
             },
             region: process.env.AWS_REGION
-        }
+        },
+        "ttl": 604800
     });
     bot.use(dynamoDBSession.middleware());
 } else {
-    bot.use(Session());
+    bot.use(Session({
+        "ttl": 604800
+    }));
 }
 
 bot.telegram.getMe().then((botInfo) => {
@@ -175,7 +178,7 @@ bot.on('new_chat_members', async (ctx) => {
             console.log(JSON.stringify({
                 "time": getTimeStamp(),
                 "event": "newTokenIssued",
-                "cid": CryptoJS.MD5(ctx.message.chat.id).toString()
+                "cid": CryptoJS.MD5(ctx.message.chat.id.toString()).toString()
             }));
         });
 
@@ -246,7 +249,7 @@ function isRateLimited(ctx) {
         console.log(JSON.stringify({
             "time": getTimeStamp(),
             "event": "ignoredRequest",
-            "uid": CryptoJS.MD5(ctx.message.from.id).toString(),
+            "uid": CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
             "lastRequest": ctx.session.lastRequest,
             "gap": gap
         }));
@@ -256,7 +259,7 @@ function isRateLimited(ctx) {
         console.log(JSON.stringify({
             "time": getTimeStamp(),
             "event": "ignoredRequestWithNotice",
-            "uid": CryptoJS.MD5(ctx.message.from.id).toString(),
+            "uid": CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
             "lastRequest": ctx.session.lastRequest,
             "gap": gap
         }));
