@@ -322,7 +322,7 @@ async function verifyUser(payload, ctx) {
         }
 
         const response = await request.post({
-            url: 'https://recaptcha.google.cn/recaptcha/api/siteverify',
+            url: 'https://www.google.com/recaptcha/api/siteverify',
             form: {
                 secret: process.env.G_SECRETKEY,
                 response: payload.gresponse,
