@@ -23,17 +23,19 @@ if (isLambda) {
     const dynamoDBSession = new DynamoDBSession({
         dynamoDBConfig: {
             params: {
-                TableName: process.env.AWS_DYNAMODB_TABLE
+                TableName: process.env.AWS_DYNAMODB_TABLE,
             },
-            region: process.env.AWS_REGION
+            region: process.env.AWS_REGION,
         },
-        "ttl": 604800
+        ttl: 604800,
     });
     bot.use(dynamoDBSession.middleware());
 } else {
-    bot.use(Session({
-        "ttl": 604800
-    }));
+    bot.use(
+        Session({
+            ttl: 604800,
+        })
+    );
 }
 
 bot.telegram.getMe().then((botInfo) => {
@@ -48,9 +50,9 @@ bot.command('start', async (ctx) => {
     if (ctx.message.chat.type !== 'private') {
         return 0;
     }
-    
+
     try {
-        if (isRateLimited(ctx)){
+        if (isRateLimited(ctx)) {
             return 1;
         }
 
@@ -67,8 +69,8 @@ bot.command('start', async (ctx) => {
         if (response && response.statusCode !== 200) {
             throw new Error(
                 'Error when trying to retrieve payload from Pastebin, you may try to use the backup method provided in the verification page or just rest for a while and try again.\n' +
-                'Status code: ' +
-                (response && response.statusCode)
+                    'Status code: ' +
+                    (response && response.statusCode)
             );
         }
 
@@ -102,7 +104,7 @@ bot.command('verify', async (ctx) => {
     }
 
     try {
-        if (isRateLimited(ctx)){
+        if (isRateLimited(ctx)) {
             return 1;
         }
 
@@ -130,26 +132,21 @@ bot.command('verify', async (ctx) => {
 
 bot.on('new_chat_members', async (ctx) => {
     ctx.message.new_chat_members
-        .filter(({
-            is_bot
-        }) => !is_bot)
+        .filter(({ is_bot }) => !is_bot)
         .forEach((user) => {
             ctx.telegram.restrictChatMember(ctx.message.chat.id, user.id);
         });
 
     // Pre-reply user joins message, record message id to JWT for subsequent deletion operation.
     ctx.message.new_chat_members
-        .filter(({
-            is_bot
-        }) => !is_bot)
+        .filter(({ is_bot }) => !is_bot)
         .forEach(async (user) => {
-            const {
-                message_id
-            } = await ctx.reply('Processing...', {
+            const { message_id } = await ctx.reply('Processing...', {
                 reply_to_message_id: ctx.message.message_id,
             });
 
-            const jwtoken = jwt.sign({
+            const jwtoken = jwt.sign(
+                {
                     exp: Math.floor(Date.now() / 1000) + 60 * 10,
                     data: {
                         mid: message_id,
@@ -168,18 +165,22 @@ bot.on('new_chat_members', async (ctx) => {
                 parse_mode: 'HTML',
                 reply_markup: JSON.stringify({
                     inline_keyboard: [
-                        [{
-                            text: 'Go to verification page',
-                            url: 'https://tg-recaptcha.github.io/#' + jwtoken + ';' + bot.options.username + ';' + process.env.G_SITEKEY,
-                        }, ],
+                        [
+                            {
+                                text: 'Go to verification page',
+                                url: 'https://tg-recaptcha.github.io/#' + jwtoken + ';' + bot.options.username + ';' + process.env.G_SITEKEY,
+                            },
+                        ],
                     ],
                 }),
             });
-            console.log(JSON.stringify({
-                "time": getTimeStamp(),
-                "event": "newTokenIssued",
-                "cid": CryptoJS.MD5(ctx.message.chat.id.toString()).toString()
-            }));
+            console.log(
+                JSON.stringify({
+                    time: getTimeStamp(),
+                    event: 'newTokenIssued',
+                    cid: CryptoJS.MD5(ctx.message.chat.id.toString()).toString(),
+                })
+            );
         });
 
     return 0;
@@ -226,12 +227,14 @@ async function verifyUser(payload, ctx) {
             }),
         });
         ctx.replyWithHTML(`Congratulations~ We already verified you, now you can enjoy your chatting with <code>${escapeHtml(decodeURIComponent(requestInfo.data.gname))}</code>'s members!`);
-        console.log(JSON.stringify({
-            "time": getTimeStamp(),
-            "event": "VerifySuccess",
-            "gid": CryptoJS.MD5(requestInfo.data.gid).toString(),
-            "duration": duration
-        }));
+        console.log(
+            JSON.stringify({
+                time: getTimeStamp(),
+                event: 'VerifySuccess',
+                gid: CryptoJS.MD5(requestInfo.data.gid).toString(),
+                duration: duration,
+            })
+        );
         return 0;
     } catch (err) {
         let msg = "Sorry, but we can't verify you now. You may like to quit and rejoin the group and try again.\n\n" + 'Technical details: ```' + err + '```';
@@ -244,25 +247,29 @@ async function verifyUser(payload, ctx) {
 }
 
 function isRateLimited(ctx) {
-    const gap = getTimeStamp() - ((ctx.session.lastRequest || (getTimeStamp() - 60)));
+    const gap = getTimeStamp() - (ctx.session.lastRequest || getTimeStamp() - 60);
     if (gap < 10) {
-        console.log(JSON.stringify({
-            "time": getTimeStamp(),
-            "event": "ignoredRequest",
-            "uid": CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
-            "lastRequest": ctx.session.lastRequest,
-            "gap": gap
-        }));
+        console.log(
+            JSON.stringify({
+                time: getTimeStamp(),
+                event: 'ignoredRequest',
+                uid: CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
+                lastRequest: ctx.session.lastRequest,
+                gap: gap,
+            })
+        );
         ctx.session.lastRequest = getTimeStamp();
         return true;
     } else if (gap < 30) {
-        console.log(JSON.stringify({
-            "time": getTimeStamp(),
-            "event": "ignoredRequestWithNotice",
-            "uid": CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
-            "lastRequest": ctx.session.lastRequest,
-            "gap": gap
-        }));
+        console.log(
+            JSON.stringify({
+                time: getTimeStamp(),
+                event: 'ignoredRequestWithNotice',
+                uid: CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
+                lastRequest: ctx.session.lastRequest,
+                gap: gap,
+            })
+        );
         throw new Error(`Too many requests! Please wait for ${30 - gap}s.`);
     }
     ctx.session.lastRequest = getTimeStamp();
