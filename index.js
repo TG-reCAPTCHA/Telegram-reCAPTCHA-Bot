@@ -168,7 +168,7 @@ bot.on('callback_query', async (ctx) => {
 
             console.log(
                 JSON.stringify({
-                    time: getTimeStamp(),
+                    time: new Date(),
                     event: 'newInviteTokenIssued',
                     gid: CryptoJS.MD5(ctx.callbackQuery.message.chat.id.toString()).toString(),
                 })
@@ -268,9 +268,16 @@ bot.on('new_chat_members', async (ctx) => {
             }
         })
         .forEach(async (user) => {
-            const { message_id } = await ctx.reply('Processing...', {
-                reply_to_message_id: ctx.message.message_id,
-            });
+            let message_id;
+            try {
+                const result = await ctx.reply('Processing...', {
+                    reply_to_message_id: ctx.message.message_id,
+                });
+                message_id = result.message_id;
+            } catch (err) {
+                const result = await ctx.reply('Processing...');
+                message_id = result.message_id;
+            }
 
             const jwtoken = jwt.sign(
                 {
@@ -287,7 +294,7 @@ bot.on('new_chat_members', async (ctx) => {
 
             console.log(
                 JSON.stringify({
-                    time: getTimeStamp(),
+                    time: new Date(),
                     event: 'newVerifyTokenIssued',
                     gid: CryptoJS.MD5(ctx.message.chat.id.toString()).toString(),
                 })
@@ -359,7 +366,7 @@ async function verifyUser(payload, ctx) {
             });
             console.log(
                 JSON.stringify({
-                    time: getTimeStamp(),
+                    time: new Date(),
                     event: 'InviteSuccess',
                     gid: CryptoJS.MD5(requestInfo.data.gid).toString(),
                 })
@@ -382,7 +389,7 @@ async function verifyUser(payload, ctx) {
             ctx.replyWithHTML(`Congratulations~ We already verified you, now you can enjoy your chatting with <code>${escapeHtml(decodeURIComponent(requestInfo.data.gname))}</code>'s members!`);
             console.log(
                 JSON.stringify({
-                    time: getTimeStamp(),
+                    time: new Date(),
                     event: 'VerifySuccess',
                     gid: CryptoJS.MD5(requestInfo.data.gid).toString(),
                     duration: duration,
@@ -408,7 +415,7 @@ function isRateLimited(ctx) {
     if (gap < 10) {
         console.log(
             JSON.stringify({
-                time: getTimeStamp(),
+                time: new Date(),
                 event: 'ignoredRequest',
                 uid: CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
                 lastRequest: ctx.session.lastRequest,
@@ -420,7 +427,7 @@ function isRateLimited(ctx) {
     } else if (gap < 30) {
         console.log(
             JSON.stringify({
-                time: getTimeStamp(),
+                time: new Date(),
                 event: 'ignoredRequestWithNotice',
                 uid: CryptoJS.MD5(ctx.message.from.id.toString()).toString(),
                 lastRequest: ctx.session.lastRequest,
